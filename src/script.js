@@ -108,12 +108,16 @@ const effectList = {
     },
     effect2() {
         updateEffect(Effect['effect2']());
+    },
+    effect3() {
+        updateEffect(Effect['effect3']());
     }
 }
 gui.add(effectList, 'effect1')
 gui.add(effectList, 'effect2')
+gui.add(effectList, 'effect3')
 
-updateEffect(Effect['effect1']());
+updateEffect(Effect['effect3']());
 
 
 /**
