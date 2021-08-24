@@ -1,4 +1,5 @@
-# Three.js Journey
+# 
+![预览图](https://github.com/stonerao/three-effect/blob/master/effect.jpg)
 
 ## Setup
 Download [Node.js](https://nodejs.org/en/download/).
