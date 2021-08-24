@@ -29,7 +29,11 @@ const gltfLoader = new GLTFLoader()
 const cubeTextureLoader = new THREE.CubeTextureLoader()
 const textureLoader = new THREE.TextureLoader()
 
+window.iChannel0 = textureLoader.load('./img.png')
 
+window.iChannel0 .wrapS = THREE.RepeatWrapping;
+window.iChannel0 .wrapT = THREE.RepeatWrapping;
+window.iChannel0 .repeat.set( 10, 10 );
 /**
  * Lights
  */
@@ -68,7 +72,7 @@ window.addEventListener('resize', () => {
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 10000)
-camera.position.set(0, 15, 24)
+camera.position.set(0, 30, 0)
 scene.add(camera)
 
 // Controls
@@ -102,16 +106,18 @@ const updateEffect = (mesh) => {
     scene.add(mesh);
 }
 const effectList = {};
+let last = '';
 Object.keys(Effect).forEach((e, i) => {
     const index = (i + 1);
     const name = 'effect' + index;
     effectList[name] = function () {
         updateEffect(Effect[name]());
     }
-    gui.add(effectList, name)
+    gui.add(effectList, name);
+    last = name;
 })
   
-updateEffect(Effect['effect1']());
+updateEffect(Effect[last]());
 
 
 /**
