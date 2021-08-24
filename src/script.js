@@ -28,7 +28,7 @@ const scene = new THREE.Scene()
 const gltfLoader = new GLTFLoader()
 const cubeTextureLoader = new THREE.CubeTextureLoader()
 const textureLoader = new THREE.TextureLoader()
- 
+
 
 /**
  * Lights
@@ -101,23 +101,17 @@ const updateEffect = (mesh) => {
     effectGroup = mesh;
     scene.add(mesh);
 }
-
-const effectList = {
-    effect1() {
-        updateEffect(Effect['effect1']());
-    },
-    effect2() {
-        updateEffect(Effect['effect2']());
-    },
-    effect3() {
-        updateEffect(Effect['effect3']());
+const effectList = {};
+Object.keys(Effect).forEach((e, i) => {
+    const index = (i + 1);
+    const name = 'effect' + index;
+    effectList[name] = function () {
+        updateEffect(Effect[name]());
     }
-}
-gui.add(effectList, 'effect1')
-gui.add(effectList, 'effect2')
-gui.add(effectList, 'effect3')
-
-updateEffect(Effect['effect3']());
+    gui.add(effectList, name)
+})
+  
+updateEffect(Effect['effect1']());
 
 
 /**
