@@ -125,7 +125,7 @@ export default {
 			
 		}
 		`;
-        
+
         return getMesh(fragmentShader);
     },
     effect2() {
@@ -176,7 +176,7 @@ export default {
         return getMesh(fragmentShader);
     },
     effect3() {
-        
+
         const fragmentShader = `
 
 		const float PI = 3.14159265359; 
@@ -277,7 +277,7 @@ export default {
         return getMesh(fragmentShader);
     },
     effect4() {
-      
+
         const fragmentShader = `
         uniform float ratio;
 
@@ -1068,7 +1068,7 @@ export default {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect12() {
         const fragmentShader = `
 		uniform float iTime;
@@ -1118,7 +1118,7 @@ export default {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect13() {
         const fragmentShader = `
 		uniform float iTime;
@@ -1165,7 +1165,7 @@ export default {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect14() {
         const fragmentShader = `
 		uniform float iTime;
@@ -1215,7 +1215,7 @@ export default {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect15() {
         const fragmentShader = `
         precision highp float;
@@ -1303,7 +1303,7 @@ export default {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect16() {
         const fragmentShader = `
         precision highp float;
@@ -1581,7 +1581,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect17() {
         const fragmentShader = `
         precision highp float;
@@ -1657,7 +1657,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect18() {
         const fragmentShader = `
         precision highp float;
@@ -1762,7 +1762,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect18() {
         const fragmentShader = `
 		uniform float iTime;
@@ -1877,7 +1877,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect19() {
         const fragmentShader = `
 		uniform float iTime;
@@ -1991,7 +1991,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect20() {
         const fragmentShader = `
 		uniform float iTime;
@@ -2130,7 +2130,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect21() {
         const fragmentShader = `
 		uniform float iTime;
@@ -2160,7 +2160,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect22() {
         const fragmentShader = `
 		uniform float iTime;
@@ -2231,7 +2231,7 @@ vec4 march(vec3 origin, vec3 direction) {
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
     effect23() {
         const fragmentShader = `
 		uniform float iTime;
@@ -2438,5 +2438,878 @@ vec2 iSphere2(in vec3 ro, in vec3 rd)
         }
 		`;
         return getMesh(fragmentShader);
-    }, 
+    },
+    effect24() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution;  
+		varying vec2 vUv;  
+         
+        void main(void) {
+            vec2 p = (vUv - 0.5 ) * 2.0;
+            // vec2 p = (2.0*fragCoord-iResolution.xy)/min(iResolution.y,iResolution.x);
+	
+            // background color
+            vec3 bcol = vec3(1.0,0.8,0.7-0.07*p.y)*(1.0-0.25*length(p));
+        
+            // animate
+            float tt = mod(iTime,1.5)/1.5;
+            float ss = pow(tt,.2)*0.5 + 0.5;
+            ss = 1.0 + ss*0.5*sin(tt*6.2831*3.0 + p.y*0.5)*exp(-tt*4.0);
+            p *= vec2(0.5,1.5) + ss*vec2(0.5,-0.5);
+        
+            // shape
+        #if 0
+            p *= 0.8;
+            p.y = -0.1 - p.y*1.2 + abs(p.x)*(1.0-abs(p.x));
+            float r = length(p);
+            float d = 0.5;
+        #else
+            p.y -= 0.25;
+            float a = atan(p.x,p.y)/3.141593;
+            float r = length(p);
+            float h = abs(a);
+            float d = (13.0*h - 22.0*h*h + 10.0*h*h*h)/(6.0-5.0*h);
+        #endif
+            
+            // color
+            float s = 0.75 + 0.75*p.x;
+            s *= 1.0-0.4*r;
+            s = 0.3 + 0.7*s;
+            s *= 0.5+0.5*pow( 1.0-clamp(r/d, 0.0, 1.0 ), 0.1 );
+            vec3 hcol = vec3(1.0,0.4*r,0.3)*s;
+            
+            vec3 col = mix( bcol, hcol, smoothstep( -0.01, 0.01, d-r) );
+        
+            gl_FragColor = vec4(col,1.0);
+	        // gl_FragColor = vec4(col*1.3, 1.0);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect25() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution;  
+		  
+        uniform sampler2D iChannel0;
+		varying vec2 vUv;  
+        #define MIN_HEIGHT 2.0
+        #define MAX_HEIGHT 4.5
+        #define WIND vec2(0.2, 0.1)
+         
+        vec3 sundir = normalize(vec3(1.0,0.75,1.0));
+
+        float noise( in vec3 x )
+        {
+            vec3 f = fract(x);
+            vec3 p = floor(x);
+            f = f * f * (3.0 - 2.0 * f);
+            
+            p.xz += WIND * iTime;
+            vec2 uv = (p.xz + vec2(37.0, 17.0) * p.y) + f.xz;
+            vec2 rg = texture2D(iChannel0, (uv + 0.5)/256.0, 0.0).yx;
+            return mix(rg.x, rg.y, f.y);
+        }
+
+        float fractal_noise(vec3 p)
+        {
+            float f = 0.0;
+            // add animation
+            //p = p - vec3(1.0, 1.0, 0.0) * iTime * 0.1;
+            p = p * 3.0;
+            f += 0.50000 * noise(p); p = 2.0 * p;
+            f += 0.25000 * noise(p); p = 2.0 * p;
+            f += 0.12500 * noise(p); p = 2.0 * p;
+            f += 0.06250 * noise(p); p = 2.0 * p;
+            f += 0.03125 * noise(p);
+            
+            return f;
+        }
+
+        float density(vec3 pos)
+        {    
+            float den = 3.0 * fractal_noise(pos * 0.3) - 2.0 + (pos.y - MIN_HEIGHT);
+            float edge = 1.0 - smoothstep(MIN_HEIGHT, MAX_HEIGHT, pos.y);
+            edge *= edge;
+            den *= edge;
+            den = clamp(den, 0.0, 1.0);
+            
+            return den;
+        }
+
+        vec3 raymarching(vec3 ro, vec3 rd, float t, vec3 backCol)
+        {   
+            vec4 sum = vec4(0.0);
+            vec3 pos = ro + rd * t;
+            for (int i = 0; i < 40; i++) {
+                if (sum.a > 0.99 || 
+                    pos.y < (MIN_HEIGHT-1.0) || 
+                    pos.y > (MAX_HEIGHT+1.0)) break;
+                
+                float den = density(pos);
+                
+                if (den > 0.01) {
+                    float dif = clamp((den - density(pos+0.3*sundir))/0.6, 0.0, 1.0);
+
+                    vec3 lin = vec3(0.65,0.7,0.75)*1.5 + vec3(1.0, 0.6, 0.3)*dif;        
+                    vec4 col = vec4( mix( vec3(1.0,0.95,0.8)*1.1, vec3(0.35,0.4,0.45), den), den);
+                    col.rgb *= lin;
+
+                    // front to back blending    
+                    col.a *= 0.5;
+                    col.rgb *= col.a;
+
+                    sum = sum + col*(1.0 - sum.a); 
+                }
+                
+                t += max(0.05, 0.02 * t);
+                pos = ro + rd * t;
+            }
+            
+            sum = clamp(sum, 0.0, 1.0);
+            
+            float h = rd.y;
+            sum.rgb = mix(sum.rgb, backCol, exp(-20.*h*h) );
+            
+            return mix(backCol, sum.xyz, sum.a);
+        }
+
+        float planeIntersect( vec3 ro, vec3 rd, float plane)
+        {
+            float h = plane - ro.y;
+            return h/rd.y;
+        }
+
+        mat3 setCamera(vec3 ro, vec3 ta, float cr)
+        {
+            vec3 cw = normalize(ta-ro);
+            vec3 cp = vec3(sin(cr), cos(cr),0.0);
+            vec3 cu = normalize( cross(cw,cp) );
+            vec3 cv = normalize( cross(cu,cw) );
+            return mat3( cu, cv, cw );
+        }
+        void main(void) {
+            vec4 iMouse = vec4(iTime * 3.0, iTime, 0.2, iTime);
+            vec2 p = (vUv - 0.5) * 4.0 ;
+            vec2 mo = vec2(0.0);
+            if (iMouse.z > 0.0) 
+            {
+                mo += (2.0 * iMouse.xy - iResolution.xy) / iResolution.yy;
+            }
+            
+            vec3 ro = vec3(0.0, 0.0, -2.0);
+            
+            // Rotate the camera
+            vec3 target = vec3(ro.x+10., 1.0+mo.y*3.0, ro.z);
+            
+            vec2 cossin = vec2(cos(mo.x), sin(mo.x));
+            mat3 rot = mat3(cossin.x, 0.0, -cossin.y,
+                            0.0, 1.0, 0.0,
+                            cossin.y, 0.0, cossin.x);
+            target = rot * (target - ro) + ro;
+            
+            // Compute the ray
+            vec3 rd = setCamera(ro, target, 0.0) * normalize(vec3(p.xy, 1.5));
+            
+            float dist = planeIntersect(ro, rd, MIN_HEIGHT);
+            
+            float sun = clamp(dot(sundir, rd), 0.0, 1.0);
+            vec3 col = mix(vec3(0.78,0.78,0.7), vec3(0.3,0.4,0.5), p.y * 0.5 + 0.5);
+            col += 0.5*vec3(1.0,0.5,0.1)*pow(sun, 8.0);
+            
+            if (dist > 0.0) {
+                col = raymarching(ro, rd, dist, col);
+            }
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect26() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+
+        vec3 COLOR1 = vec3(0.0, 0.0, 0.3);
+        vec3 COLOR2 = vec3(0.5, 0.0, 0.0);
+        float BLOCK_WIDTH = 0.01;
+
+        void main(void) {
+            vec2 uv = (vUv - 0.3) * 2.0 ;
+            
+            // To create the BG pattern
+            vec3 final_color = vec3(1.0);
+            vec3 bg_color = vec3(0.0);
+            vec3 wave_color = vec3(0.0);
+            
+            float c1 = mod(uv.x, 2.0 * BLOCK_WIDTH);
+            c1 = step(BLOCK_WIDTH, c1);
+            
+            float c2 = mod(uv.y, 2.0 * BLOCK_WIDTH);
+            c2 = step(BLOCK_WIDTH, c2);
+            
+            bg_color = mix(uv.x * COLOR1, uv.y * COLOR2, c1 * c2);
+            
+            
+            // To create the waves
+            float wave_width = 0.01;
+            uv  = -1.0 + 2.0 * uv;
+            uv.y += 0.1;
+            for(float i = 0.0; i < 10.0; i++) {
+                
+                uv.y += (0.07 * sin(uv.x + i/7.0 + iTime ));
+                wave_width = abs(1.0 / (150.0 * uv.y));
+                wave_color += vec3(wave_width * 1.9, wave_width, wave_width * 1.5);
+            }
+            
+            final_color = bg_color + wave_color;
+            
+            
+            gl_FragColor = vec4(final_color, 1.0);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect27() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+
+        mat2 m(float a){float c=cos(a), s=sin(a);return mat2(c,-s,s,c);}
+        float map(vec3 p){
+            p.xz*= m(iTime*0.4);p.xy*= m(iTime*0.3);
+            vec3 q = p*2.+iTime;
+            return length(p+vec3(sin(iTime*0.7)))*log(length(p)+1.) + sin(q.x+sin(q.z+sin(q.y)))*0.5 - 1.;
+        }
+
+
+        void main(void) { 
+            
+            vec2 p = (vUv - 0.5) * 2.0  ;
+            vec3 cl = vec3(0.);
+            float d = 2.5;
+            for(int i=0; i<=5; i++)	{
+                vec3 p = vec3(0,0,5.) + normalize(vec3(p, -1.))*d;
+                float rz = map(p);
+                float f =  clamp((rz - map(p+.1))*0.5, -.1, 1. );
+                vec3 l = vec3(0.1,0.3,.4) + vec3(5., 2.5, 3.)*f;
+                cl = cl*l + smoothstep(2.5, .0, rz)*.7*l;
+                d += min(rz, 1.);
+            }
+            gl_FragColor = vec4(cl, 1.);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect28() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+
+        float sdSphere(vec3 pos, float size)
+        {
+            return length(pos) - size;
+        }
+
+        float sdBox(vec3 pos, vec3 size)
+        {
+            pos = abs(pos) - vec3(size);
+            return max(max(pos.x, pos.y), pos.z);
+        }
+
+        float sdOctahedron(vec3 p, float s)
+        {
+            p = abs(p);
+            float m = p.x+p.y+p.z-s;
+            vec3 q;
+                if( 3.0*p.x < m ) q = p.xyz;
+            else if( 3.0*p.y < m ) q = p.yzx;
+            else if( 3.0*p.z < m ) q = p.zxy;
+            else return m*0.57735027;
+            
+            float k = clamp(0.5*(q.z-q.y+s),0.0,s); 
+            return length(vec3(q.x,q.y-s+k,q.z-k)); 
+        }
+
+        float sdPlane(vec3 pos)
+        {
+            return pos.y;
+        }
+
+        mat2 rotate(float a)
+        {
+            float s = sin(a);
+            float c = cos(a);
+            return mat2(c, s, -s, c);
+        }
+
+        vec3 repeat(vec3 pos, vec3 span)
+        {
+            return abs(mod(pos, span)) - span * 0.5;
+        }
+
+        float getDistance(vec3 pos, vec2 uv)
+        {
+            vec3 originalPos = pos;
+
+            for(int i = 0; i < 3; i++)
+            {
+                pos = abs(pos) - 4.5;
+                pos.xz *= rotate(1.0);
+                pos.yz *= rotate(1.0);
+            }
+
+            pos = repeat(pos, vec3(4.0));
+
+            float d0 = abs(originalPos.x) - 0.1;
+            float d1 = sdBox(pos, vec3(0.8));
+
+            pos.xy *= rotate(mix(1.0, 2.0, abs(sin(iTime))));
+            float size = mix(1.1, 1.3, (abs(uv.y) * abs(uv.x)));
+            float d2 = sdSphere(pos, size);
+            float dd2 = sdOctahedron(pos, 1.8);
+            float ddd2 = mix(d2, dd2, abs(sin(iTime)));
+        
+            return max(max(d1, -ddd2), -d0);
+        }
+
+
+
+        void main(void) { 
+            
+            vec2 p = (vUv - 0.5) * 4.5;
+            // camera
+            vec3 cameraOrigin = vec3(0.0, 0.0, -10.0 + iTime * 4.0);
+            vec3 cameraTarget = vec3(cos(iTime) + sin(iTime / 2.0) * 10.0, exp(sin(iTime)) * 2.0, 3.0 + iTime * 4.0);
+            vec3 upDirection = vec3(0.0, 1.0, 0.0);
+            vec3 cameraDir = normalize(cameraTarget - cameraOrigin);
+            vec3 cameraRight = normalize(cross(upDirection, cameraOrigin));
+            vec3 cameraUp = cross(cameraDir, cameraRight);
+            vec3 rayDirection = normalize(cameraRight * p.x + cameraUp * p.y + cameraDir);
+            
+            float depth = 0.0;
+            float ac = 0.0;
+            vec3 rayPos = vec3(0.0);
+            float d = 0.0;
+
+            for(int i = 0; i < 80; i++)
+            {
+                rayPos = cameraOrigin + rayDirection * depth;
+                d = getDistance(rayPos, p);
+
+                if(abs(d) < 0.0001)
+                {
+                    break;
+                }
+
+                ac += exp(-d * mix(5.0, 10.0, abs(sin(iTime))));        
+                depth += d;
+            }
+            
+            vec3 col = vec3(0.0, 0.3, 0.7);
+            ac *= 1.2 * (iResolution.x/iResolution.y - abs(p.x)) ;
+            vec3 finalCol = col * ac * 0.06;
+            gl_FragColor = vec4(finalCol, 1.0);
+            gl_FragColor.w = 1.0 - depth * 0.1;
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect29() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+
+        #define PASS_COUNT 1
+        vec4 iMouse = vec4(.0, 0, 0.2, 0);
+float fBrightness = 2.5;
+
+// Number of angular segments
+float fSteps = 121.0;
+
+float fParticleSize = 0.015;
+float fParticleLength = 0.5 / 60.0;
+
+// Min and Max star position radius. Min must be present to prevent stars too near camera
+float fMinDist = 0.8;
+float fMaxDist = 5.0;
+
+float fRepeatMin = 1.0;
+float fRepeatMax = 2.0;
+
+// fog density
+float fDepthFade = 0.8;
+
+float Random(float x)
+{
+	return fract(sin(x * 123.456) * 23.4567 + sin(x * 345.678) * 45.6789 + sin(x * 456.789) * 56.789);
+}
+
+vec3 GetParticleColour( const in vec3 vParticlePos, const in float fParticleSize, const in vec3 vRayDir )
+{		
+	vec2 vNormDir = normalize(vRayDir.xy);
+	float d1 = dot(vParticlePos.xy, vNormDir.xy) / length(vRayDir.xy);
+	vec3 vClosest2d = vRayDir * d1;
+	
+	vec3 vClampedPos = vParticlePos;
+	
+	vClampedPos.z = clamp(vClosest2d.z, vParticlePos.z - fParticleLength, vParticlePos.z + fParticleLength);
+	
+	float d = dot(vClampedPos, vRayDir);
+	
+	vec3 vClosestPos = vRayDir * d;
+	
+	vec3 vDeltaPos = vClampedPos - vClosestPos;	
+		
+	float fClosestDist = length(vDeltaPos) / fParticleSize;
+	
+	float fShade = 	clamp(1.0 - fClosestDist, 0.0, 1.0);
+		
+	fShade = fShade * exp2(-d * fDepthFade) * fBrightness;
+	
+	return vec3(fShade);
+}
+
+vec3 GetParticlePos( const in vec3 vRayDir, const in float fZPos, const in float fSeed )
+{
+	float fAngle = atan(vRayDir.x, vRayDir.y);
+	float fAngleFraction = fract(fAngle / (3.14 * 2.0));
+	
+	float fSegment = floor(fAngleFraction * fSteps + fSeed) + 0.5 - fSeed;
+	float fParticleAngle = fSegment / fSteps * (3.14 * 2.0);
+
+	float fSegmentPos = fSegment / fSteps;
+	float fRadius = fMinDist + Random(fSegmentPos + fSeed) * (fMaxDist - fMinDist);
+	
+	float tunnelZ = vRayDir.z / length(vRayDir.xy / fRadius);
+	
+	tunnelZ += fZPos;
+	
+	float fRepeat = fRepeatMin + Random(fSegmentPos + 0.1 + fSeed) * (fRepeatMax - fRepeatMin);
+	
+	float fParticleZ = (ceil(tunnelZ / fRepeat) - 0.5) * fRepeat - fZPos;
+	
+	return vec3( sin(fParticleAngle) * fRadius, cos(fParticleAngle) * fRadius, fParticleZ );
+}
+
+vec3 Starfield( const in vec3 vRayDir, const in float fZPos, const in float fSeed )
+{	
+	vec3 vParticlePos = GetParticlePos(vRayDir, fZPos, fSeed);
+	
+	return GetParticleColour(vParticlePos, fParticleSize, vRayDir);	
+}
+
+vec3 RotateX( const in vec3 vPos, const in float fAngle )
+{
+    float s = sin(fAngle);
+    float c = cos(fAngle);
+    
+    vec3 vResult = vec3( vPos.x, c * vPos.y + s * vPos.z, -s * vPos.y + c * vPos.z);
+    
+    return vResult;
+}
+
+vec3 RotateY( const in vec3 vPos, const in float fAngle )
+{
+    float s = sin(fAngle);
+    float c = cos(fAngle);
+    
+    vec3 vResult = vec3( c * vPos.x + s * vPos.z, vPos.y, -s * vPos.x + c * vPos.z);
+    
+    return vResult;
+}
+
+vec3 RotateZ( const in vec3 vPos, const in float fAngle )
+{
+    float s = sin(fAngle);
+    float c = cos(fAngle);
+    
+    vec3 vResult = vec3( c * vPos.x + s * vPos.y, -s * vPos.x + c * vPos.y, vPos.z);
+    
+    return vResult;
+}
+
+void mainVR( out vec4 fragColor, in vec2 fragCoord, vec3 vRayOrigin, vec3 vRayDir )
+{
+/*	vec2 vScreenUV = fragCoord.xy / iResolution.xy;
+	
+	vec2 vScreenPos = vScreenUV * 2.0 - 1.0;
+	vScreenPos.x *= iResolution.x / iResolution.y;
+
+	vec3 vRayDir = normalize(vec3(vScreenPos, 1.0));
+
+	vec3 vEuler = vec3(0.5 + sin(iTime * 0.2) * 0.125, 0.5 + sin(iTime * 0.1) * 0.125, iTime * 0.1 + sin(iTime * 0.3) * 0.5);
+			
+	if(iMouse.z > 0.0)
+	{
+		vEuler.x = -((iMouse.y / iResolution.y) * 2.0 - 1.0);
+		vEuler.y = -((iMouse.x / iResolution.x) * 2.0 - 1.0);
+		vEuler.z = 0.0;
+	}
+		
+	vRayDir = RotateX(vRayDir, vEuler.x);
+	vRayDir = RotateY(vRayDir, vEuler.y);
+	vRayDir = RotateZ(vRayDir, vEuler.z);
+*/	
+	float fShade = 0.0;
+		
+	float a = 0.2;
+	float b = 10.0;
+	float c = 1.0;
+	float fZPos = 5.0 + iTime * c + sin(iTime * a) * b;
+	float fSpeed = c + a * b * cos(a * iTime);
+	
+	fParticleLength = 0.25 * fSpeed / 60.0;
+	
+	float fSeed = 0.0;
+	
+	vec3 vResult = mix(vec3(0.005, 0.0, 0.01), vec3(0.01, 0.005, 0.0), vRayDir.y * 0.5 + 0.5);
+	
+	for(int i=0; i<PASS_COUNT; i++)
+	{
+		vResult += Starfield(vRayDir, fZPos, fSeed);
+		fSeed += 1.234;
+	}
+	
+	fragColor = vec4(sqrt(vResult),1.0);
+}
+
+        void main(void) { 
+             
+            vec2 vScreenUV = (vUv - 0.5) * 10.0;
+	
+	vec2 vScreenPos = vScreenUV * 2.0 - 1.0;
+	vScreenPos.x *= iResolution.x / iResolution.y;
+
+	vec3 vRayDir = normalize(vec3(vScreenPos, 1.0));
+
+	vec3 vEuler = vec3(0.5 + sin(iTime * 0.2) * 0.125, 0.5 + sin(iTime * 0.1) * 0.125, iTime * 0.1 + sin(iTime * 0.3) * 0.5);
+			
+	if(iMouse.z > 0.0)
+	{
+		vEuler.x = -((iMouse.y / iResolution.y) * 2.0 - 1.0);
+		vEuler.y = -((iMouse.x / iResolution.x) * 2.0 - 1.0);
+		vEuler.z = 0.0;
+	}
+		
+	vRayDir = RotateX(vRayDir, vEuler.x);
+	vRayDir = RotateY(vRayDir, vEuler.y);
+	vRayDir = RotateZ(vRayDir, vEuler.z);
+	
+	float fShade = 0.0;
+		
+	float a = 0.2;
+	float b = 10.0;
+	float c = 1.0;
+	float fZPos = 5.0 + iTime * c + sin(iTime * a) * b;
+	float fSpeed = c + a * b * cos(a * iTime);
+	
+	fParticleLength = 0.25 * fSpeed / 60.0;
+	
+	float fSeed = 0.0;
+	
+	vec3 vResult = mix(vec3(0.005, 0.0, 0.01), vec3(0.01, 0.005, 0.0), vRayDir.y * 0.5 + 0.5);
+	
+	for(int i=0; i<PASS_COUNT; i++)
+	{
+		vResult += Starfield(vRayDir, fZPos, fSeed);
+		fSeed += 1.234;
+	}
+	
+	gl_FragColor = vec4(sqrt(vResult),1.0);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+
+    effect30() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+        
+        #define USE_LIGHT 0
+
+        mat3 m = mat3( 0.00,  0.80,  0.60,
+                    -0.80,  0.36, -0.48,
+                    -0.60, -0.48,  0.64);
+
+        float hash(float n)
+        {
+            return fract(sin(n) * 43758.5453);
+        }
+
+        ///
+        /// Noise function
+        ///
+        float noise(in vec3 x)
+        {
+            vec3 p = floor(x);
+            vec3 f = fract(x);
+            
+            f = f * f * (3.0 - 2.0 * f);
+            
+            float n = p.x + p.y * 57.0 + 113.0 * p.z;
+            
+            float res = mix(mix(mix(hash(n +   0.0), hash(n +   1.0), f.x),
+                                mix(hash(n +  57.0), hash(n +  58.0), f.x), f.y),
+                            mix(mix(hash(n + 113.0), hash(n + 114.0), f.x),
+                                mix(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
+            return res;
+        }
+
+        ///
+        /// Fractal Brownian motion.
+        ///
+        /// Refer to:
+        /// EN: https://thebookofshaders.com/13/
+        /// JP: https://thebookofshaders.com/13/?lan=jp
+        ///
+        float fbm(vec3 p)
+        {
+            float f;
+            f  = 0.5000 * noise(p); p = m * p * 2.02;
+            f += 0.2500 * noise(p); p = m * p * 2.03;
+            f += 0.1250 * noise(p);
+            return f;
+        }
+
+        //////////////////////////////////////////////////
+
+        ///
+        /// Sphere distance function.
+        ///
+        /// But this function return inverse value.
+        /// Normal dist function is like below.
+        /// 
+        /// return length(pos) - 0.1;
+        ///
+        /// Because this function is used for density.
+        ///
+        float scene(in vec3 pos)
+        {
+            return 0.1 - length(pos) * 0.05 + fbm(pos * 0.3);
+        }
+
+        ///
+        /// Get normal of the cloud.
+        ///
+        vec3 getNormal(in vec3 p)
+        {
+            const float e = 0.01;
+            return normalize(vec3(scene(vec3(p.x + e, p.y, p.z)) - scene(vec3(p.x - e, p.y, p.z)),
+                                scene(vec3(p.x, p.y + e, p.z)) - scene(vec3(p.x, p.y - e, p.z)),
+                                scene(vec3(p.x, p.y, p.z + e)) - scene(vec3(p.x, p.y, p.z - e))));
+        }
+
+        ///
+        /// Create a camera pose control matrix.
+        ///
+        mat3 camera(vec3 ro, vec3 ta)
+        {
+            vec3 cw = normalize(ta - ro);
+            vec3 cp = vec3(0.0, 1.0, 0.0);
+            vec3 cu = cross(cw, cp);
+            vec3 cv = cross(cu, cw);
+            return mat3(cu, cv, cw);
+        }
+ 
+        void main(void) { 
+            vec2 uv = (vUv - 0.5) * 3.0;
+            vec2 mo = vec2(iTime * 0.1, cos(iTime * 0.25) * 3.0);
+    
+            // Camera
+            float camDist = 25.0;
+            
+            // target
+            vec3 ta = vec3(0.0, 1.0, 0.0);
+            
+            // Ray origin
+            //vec3 ori = vec3(sin(iTime) * camDist, 0, cos(iTime) * camDist);
+            vec3 ro = camDist * normalize(vec3(cos(2.75 - 3.0 * mo.x), 0.7 - 1.0 * (mo.y - 1.0), sin(2.75 - 3.0 * mo.x)));
+            
+            float targetDepth = 1.3;
+            
+            // Camera pose.
+            mat3 c = camera(ro, ta);
+            vec3 dir = c * normalize(vec3(uv, targetDepth));
+            
+            // For raymarching const values.
+            const int sampleCount = 64;
+            const int sampleLightCount = 6;
+            const float eps = 0.01;
+            
+            // Raymarching step settings.
+            float zMax = 40.0;
+            float zstep = zMax / float(sampleCount);
+            
+            float zMaxl = 20.0;
+            float zstepl = zMaxl / float(sampleLightCount);
+            
+            // Easy access to the ray origin
+            vec3 p = ro;
+            
+            // Transmittance
+            float T = 1.0;
+            
+            // Substantially transparency parameter.
+            float absorption = 100.0;
+            
+            // Light Direction
+            vec3 sun_direction = normalize(vec3(1.0, 0.0, 0.0));
+            
+            // Result of culcration
+            vec4 color = vec4(0.0);
+            
+            for (int i = 0; i < sampleCount; i++)
+            {
+                // Using distance function for density.
+                // So the function not normal value.
+                // Please check it out on the function comment.
+                float density = scene(p);
+                
+                // The density over 0.0 then start cloud ray marching.
+                // Why? because the function will return negative value normally.
+                // But if ray is into the cloud, the function will return positive value.
+                if (density > 0.0)
+                {
+                    // Let's start cloud ray marching!
+                    
+                    // why density sub by sampleCount?
+                    // This mean integral for each sampling points.
+                    float tmp = density / float(sampleCount);
+                    
+                    T *= 1.0 - (tmp * absorption);
+                    
+                    // Return if transmittance under 0.01. 
+                    // Because the ray is almost absorbed.
+                    if (T <= 0.01)
+                    {
+                        break;
+                    }
+                    
+                    #if USE_LIGHT == 1
+                    // Light scattering
+                    
+                    // Transmittance for Light
+                    float Tl = 1.0;
+                    
+                    // Start light scattering with raymarching.
+                    
+                    // Raymarching position for the light.
+                    vec3 lp = p;
+                    
+                    // Iteration of sampling light.
+                    for (int j = 0; j < sampleLightCount; j++)
+                    {
+                        float densityLight = scene(lp);
+                        
+                        // If densityLight is over 0.0, the ray is stil in the cloud.
+                        if (densityLight > 0.0)
+                        {
+                            float tmpl = densityLight / float(sampleCount);
+                            Tl *= 1.0 - (tmpl * absorption);
+                        }
+                        
+                        if (Tl <= 0.01)
+                        {
+                            break;
+                        }
+                        
+                        // Step to next position.
+                        lp += sun_direction * zstepl;
+                    }
+                    #endif
+                    
+                    // Add ambient + light scattering color
+                    float opaity = 50.0;
+                    float k = opaity * tmp * T;
+                    vec4 cloudColor = vec4(1.0);
+                    vec4 col1 = cloudColor * k;
+                    
+                    #if USE_LIGHT == 1
+                    float opacityl = 30.0;
+                    float kl = opacityl * tmp * T * Tl;
+                    vec4 lightColor = vec4(1.0, 0.7, 0.9, 1.0);
+                    vec4 col2 = lightColor * kl;
+                    #else
+                    vec4 col2 = vec4(0.0);
+                    #endif
+                    
+                    color += col1 + col2;
+                }
+                
+                p += dir * zstep;
+            }
+            
+            vec3 bg = mix(vec3(0.3, 0.1, 0.8), vec3(0.7, 0.7, 1.0), 1.0 - (uv.y + 1.0) * 0.5);
+            color.rgb += bg;
+            gl_FragColor = color;
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect31() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+        
+        #define TAU 6.28318530718
+
+        #define TILING_FACTOR 1.0
+        #define MAX_ITER 8
+
+
+        float waterHighlight(vec2 p, float time, float foaminess)
+        {
+            vec2 i = vec2(p);
+            float c = 0.0;
+            float foaminess_factor = mix(1.0, 6.0, foaminess);
+            float inten = .005 * foaminess_factor;
+
+            for (int n = 0; n < MAX_ITER; n++) 
+            {
+                float t = time * (1.0 - (3.5 / float(n+1)));
+                i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+                c += 1.0/length(vec2(p.x / (sin(i.x+t)),p.y / (cos(i.y+t))));
+            }
+            c = 0.2 + c / (inten * float(MAX_ITER));
+            c = 1.17-pow(c, 1.4);
+            c = pow(abs(c), 8.0);
+            return c / sqrt(foaminess_factor);
+        }
+ 
+        void main(void) { 
+            vec2 uv = vUv;
+            float time = iTime * 0.1+23.0;
+            // vec2 uv = fragCoord.xy / iResolution.xy;
+            vec2 uv_square = vec2(uv.x * iResolution.x / iResolution.y, uv.y);
+            float dist_center = pow(2.0*length(uv - 0.5), 2.0);
+            
+            float foaminess = smoothstep(0.4, 1.8, dist_center);
+            float clearness = 0.1 + 0.9*smoothstep(0.1, 0.5, dist_center);
+            
+            vec2 p = mod(uv_square*TAU*TILING_FACTOR, TAU)-250.0;
+            
+            float c = waterHighlight(p, time, foaminess);
+            
+            vec3 water_color = vec3(0.0, 0.35, 0.5);
+            vec3 color = vec3(c);
+            color = clamp(color + water_color, 0.0, 1.0);
+            
+            color = mix(water_color, color, clearness);
+
+            gl_FragColor = vec4(color, 1.0);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+
 }
