@@ -3311,5 +3311,382 @@ void mainVR( out vec4 fragColor, in vec2 fragCoord, vec3 vRayOrigin, vec3 vRayDi
 		`;
         return getMesh(fragmentShader);
     },
+    effect32() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+        
+        float time;
+
+        //-----------------------------------------------------------------------------
+        float hash( float n )
+        {
+            return fract(sin(n)*43758.5453);
+        }
+
+        //-----------------------------------------------------------------------------
+        float noise( in vec2 x )
+        {
+            vec2 p = floor(x);
+            vec2 f = fract(x);
+
+            f = f*f*(3.0-2.0*f);
+
+            float n = p.x + p.y*57.0;
+
+            float res = mix(mix( hash(n+  0.0), hash(n+  1.0),f.x),
+                            mix( hash(n+ 57.0), hash(n+ 58.0),f.x),f.y);
+
+            return res;
+        }
+
+        //-----------------------------------------------------------------------------
+        float SmokeParticle(vec2 loc, vec2 pos, float size, float rnd)
+        {
+            loc = loc-pos;
+            float d = dot(loc, loc)/size;
+            // Outside the circle? No influence...
+            if (d > 1.0) return 0.0;
+
+            // Rotate the particles...
+            float r= time*rnd*1.85;
+            float si = sin(r);
+            float co = cos(r);
+            // Grab the rotated noise decreasing resolution due to Y position.
+            // Also used 'rnd' as an additional noise changer.
+            d = noise(hash(rnd*828.0)*83.1+mat2(co, si, -si, co)*loc.xy*2./(pos.y*.16)) * pow((1.-d), 3.)*.7;
+            return d;
+        }
+
+        //-----------------------------------------------------------------------------
+        float RockParticle(vec2 loc, vec2 pos, float size, float rnd)
+        {
+            loc = loc-pos;
+            float d = dot(loc, loc)/size;
+            // Outside the circle? No influence...
+            if (d > 1.0) return 0.0;
+            float r= time*1.5 * (rnd);
+            float si = sin(r);
+            float co = cos(r);
+            d = noise((rnd*38.0)*83.1+mat2(co, si, -si, co)*loc*143.0) * pow(1.0-d, 15.25);
+            return pow(d, 2.)*5.;
+            
+        }
+ 
+        void main(void) {
+            time = (iTime+1.);
+            vec2 uv = vUv * 2.0 - 1.1;
+            uv.x *= iResolution.x/iResolution.y;
+            vec3 col = mix(vec3(.95, 1., 1.0), vec3(.75, .89, 1.0), uv.y+.75);
+
+            // Position...	
+            uv = uv + vec2(0.1,1.1);
+            // Loop through rock particles...
+            for (float i = 0.0; i < 40.0; i+=1.0)
+            {
+                float t = time*1.3+i*(2.+hash(i*-1239.)*2.0);
+                float sm = mod(t, 9.3)*.8;
+                float rnd = floor(t / 9.3);
+                vec2 pos = vec2(0.0, sm) *.5;
+                pos.x += (hash(i*33.0+rnd)-.5)*.2 * sm*2.13;
+                // Mechanics... a butchered d = vt + (1/2)at^2    ;)
+                pos.y += (.1 - (.075+hash(i*30.0+rnd*36.7)*.15)*(sm*sm)*.8);
+                float d = RockParticle(pos, uv, .01*hash(i*1332.23)+.001, (hash(-i*42.13*rnd)-.5)*15.0);
+                if (d <= 0.0) continue;
+                float c = max(.3+abs(hash(i*11340.0))*.8+(1.0-sm*.5), 0.0);
+                col = mix(col, vec3(c,c*.2, 0.0), min(d, 1.));
+            }
+
+            // Loop through smoke particles...
+            for (float i = 0.0; i < 120.0; i+=1.0)
+            {
+                // Lots of magic numbers? Yerp....
+                float t=  time+i*(2.+hash(i*-1239.)*2.0);
+                float sm = mod(t, 8.6) *.5;
+                float rnd = floor(t / 8.6);
+
+                vec2 pos = vec2(0.0, sm) *.5;
+                pos.x += (hash(i)-.5)*.2 * uv.y*5.13;
+                float d = SmokeParticle(pos, uv, .03*hash(i*1332.23+rnd)+.001+sm*0.03, hash(i*rnd*2242.13)-0.5);
+                if (d <= 0.0) continue;
+                d = d* max((3.0-(hash(i*127.0)*1.5) - sm*.63), 0.0);
+                float c = abs(hash(i*4.4));
+                // Black/rusty smoke...
+                col = mix(col, vec3(c*.3+.05, c*.3, c*.25), min(d, 1.0));
+                // Lava gush...
+                col = mix(col, vec3(.52, .25, 0.0), max((d-1.05)*8.0, 0.0));
+            }
+            uv = vUv;
+            col *= pow( 45.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y), .08 );
+            gl_FragColor = vec4( col, 1.0 );
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect33() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+        
+        #define POINT_COUNT 8
+
+vec2 points[POINT_COUNT];
+const float speed = -0.5;
+const float len = 0.25;
+const float scale = 0.012;
+float intensity = 1.3;
+float radius = 0.015;
+
+//https://www.shadertoy.com/view/MlKcDD
+//Signed distance to a quadratic bezier
+float sdBezier(vec2 pos, vec2 A, vec2 B, vec2 C){    
+    vec2 a = B - A;
+    vec2 b = A - 2.0*B + C;
+    vec2 c = a * 2.0;
+    vec2 d = A - pos;
+
+    float kk = 1.0 / dot(b,b);
+    float kx = kk * dot(a,b);
+    float ky = kk * (2.0*dot(a,a)+dot(d,b)) / 3.0;
+    float kz = kk * dot(d,a);      
+
+    float res = 0.0;
+
+    float p = ky - kx*kx;
+    float p3 = p*p*p;
+    float q = kx*(2.0*kx*kx - 3.0*ky) + kz;
+    float h = q*q + 4.0*p3;
+
+    if(h >= 0.0){ 
+        h = sqrt(h);
+        vec2 x = (vec2(h, -h) - q) / 2.0;
+        vec2 uv = sign(x)*pow(abs(x), vec2(1.0/3.0));
+        float t = uv.x + uv.y - kx;
+        t = clamp( t, 0.0, 1.0 );
+
+        // 1 root
+        vec2 qos = d + (c + b*t)*t;
+        res = length(qos);
+    }else{
+        float z = sqrt(-p);
+        float v = acos( q/(p*z*2.0) ) / 3.0;
+        float m = cos(v);
+        float n = sin(v)*1.732050808;
+        vec3 t = vec3(m + m, -n - m, n - m) * z - kx;
+        t = clamp( t, 0.0, 1.0 );
+
+        // 3 roots
+        vec2 qos = d + (c + b*t.x)*t.x;
+        float dis = dot(qos,qos);
+        
+        res = dis;
+
+        qos = d + (c + b*t.y)*t.y;
+        dis = dot(qos,qos);
+        res = min(res,dis);
+
+        qos = d + (c + b*t.z)*t.z;
+        dis = dot(qos,qos);
+        res = min(res,dis);
+
+        res = sqrt( res );
+    }
+    
+    return res;
+}
+
+
+//http://mathworld.wolfram.com/HeartCurve.html
+vec2 getHeartPosition(float t){
+    return vec2(16.0 * sin(t) * sin(t) * sin(t),
+                -(13.0 * cos(t) - 5.0 * cos(2.0*t)
+                - 2.0 * cos(3.0*t) - cos(4.0*t)));
+}
+
+//https://www.shadertoy.com/view/3s3GDn
+float getGlow(float dist, float radius, float intensity){
+    return pow(radius/dist, intensity);
+}
+
+float getSegment(float t, vec2 pos, float offset){
+	for(int i = 0; i < POINT_COUNT; i++){
+        points[i] = getHeartPosition(offset + float(i)*len + fract(speed * t) * 6.28);
+    }
+    
+    vec2 c = (points[0] + points[1]) / 2.0;
+    vec2 c_prev;
+	float dist = 10000.0;
+    
+    for(int i = 0; i < POINT_COUNT-1; i++){
+        //https://tinyurl.com/y2htbwkm
+        c_prev = c;
+        c = (points[i] + points[i+1]) / 2.0;
+        dist = min(dist, sdBezier(pos, scale * c_prev, scale * points[i], scale * c));
+    }
+    return max(0.0, dist);
+}
+ 
+        void main(void) {
+            vec2 uv = vUv;
+    float widthHeightRatio = iResolution.x/iResolution.y;
+    vec2 centre = vec2(0.5, 0.5);
+    vec2 pos = centre - uv;
+    pos.y /= widthHeightRatio;
+    //Shift upwards to centre heart
+    pos.y += 0.03;
+	
+    float t = iTime;
+    
+    //Get first segment
+    float dist = getSegment(t, pos, 0.0);
+    float glow = getGlow(dist, radius, intensity);
+    
+    vec3 col = vec3(0.0);
+    
+    //White core
+    col += 10.0*vec3(smoothstep(0.006, 0.003, dist));
+    //Pink glow
+    col += glow * vec3(1.0,0.05,0.3);
+    
+    //Get second segment
+    dist = getSegment(t, pos, 3.4);
+    glow = getGlow(dist, radius, intensity);
+    
+    //White core
+    col += 10.0*vec3(smoothstep(0.006, 0.003, dist));
+    //Blue glow
+    col += glow * vec3(0.1,0.4,1.0);
+        
+    //Tone mapping
+    col = 1.0 - exp(-col);
+    
+    //Gamma
+    col = pow(col, vec3(0.4545));
+
+    //Output to screen
+    gl_FragColor = vec4(col,1.0);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect34() {
+        const fragmentShader = `
+		uniform float iTime; 
+		uniform vec2 iResolution; 
+		varying vec2 vUv;  
+        
+        float hash(float x)
+{
+	return fract(21654.6512 * sin(385.51 * x));
+}
+
+float hash(vec2 p)
+{
+	return fract(21654.65155 * sin(35.51 * p.x + 45.51 * p.y));
+}
+
+float lhash(float x, float y)
+{
+	float h = 0.0;
+	
+	for(int i = 0;i < 5;i++)
+	{
+		h += (fract(21654.65155 * float(i) * sin(35.51 * x + 45.51 * float(i) * y * (5.0 / float(i))))* 2.0 - 1.0) / 10.0;
+	}
+	return h / 5.0 + 0.02;
+	return (fract(21654.65155 * sin(35.51 * x + 45.51 * y))* 2.0 - 1.0) / 20.0;
+}
+
+float noise(vec2 p)
+{
+	vec2 fl = floor(p);
+	vec2 fr = fract(p);
+	
+	fr.x = smoothstep(0.0,1.0,fr.x);
+	fr.y = smoothstep(0.0,1.0,fr.y);
+	
+	float a = mix(hash(fl + vec2(0.0,0.0)), hash(fl + vec2(1.0,0.0)),fr.x);
+	float b = mix(hash(fl + vec2(0.0,1.0)), hash(fl + vec2(1.0,1.0)),fr.x);
+	
+	return mix(a,b,fr.y);
+}
+
+//Fractal Brownian Motion 
+float fbm(vec2 p)
+{
+	float v = 0.0, f = 1.0, a = 0.5;
+	for(int i = 0;i < 5; i++)
+	{
+		v += noise(p * f) * a;
+		f *= 2.0;
+		a *= 0.5;
+	}
+	return v;
+}
+
+ 
+        void main(void) {
+            float time = iTime*1.;
+            vec2 uv = (vUv - 0.5) * 2.0;
+            uv = uv*2.0 -1.0;
+            uv.x *= iResolution.x / iResolution.y;	
+        
+            float p = fbm(vec2(noise(uv+time/2.5),noise(uv*2.+cos(time/2.)/2.)));
+            //uncomment for more plasma/lighting/plastic effect..
+            //p = (1. - abs(p * 2.0 - 1.0))*.8;
+        
+            vec3 col = pow(vec3(p),vec3(0.3))-0.4;
+            col = mix( col, vec3(1.0), 1.0-smoothstep(0.0,0.2,pow(1.0 / 2.0,0.5) - uv.y/40.0) );
+            float s = smoothstep(.35,.6,col.x);
+            float s2 = smoothstep(.47,.6,col.x);
+            float s3 = smoothstep(.51,.6,col.x);
+            //multiply by the inverse to get the "smoky" effect, first attempt
+            col*=vec3(1.3,.1,0.1)*s; //add red
+            col+=vec3(0.3,0.4,.1)*s2; //add orange
+            col+=vec3(1.,4.,.1)*s3; //add yellow
+            //made it more bright
+            col*=1.5;
+            gl_FragColor = vec4(col,col.r*.3);
+            gl_FragColor.rgb += 0.05;
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
+    effect35() {
+        const fragmentShader = `
+		uniform float iTime; 
+		varying vec2 vUv;  
+        
+        vec3 hsb2rgb(in vec3 c)
+        {
+            vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
+                    6.0)-3.0)-1.0,
+            0.0,
+            1.0 );
+            rgb = rgb*rgb*(3.0-2.0*rgb);
+            return c.z * mix( vec3(1.0), rgb, c.y);
+        }
+
+
+ 
+        void main(void) {
+            // float time = iTime*1.;
+            vec2 uv = (vUv - 0.5) * 4.0;
+            float r = length(uv) * 0.9;
+            vec3 color = hsb2rgb(vec3(0.24, 0.7, 0.4));
+            
+            float a = pow(r, 2.0);
+            float b = sin(r * 0.8 - 1.6);
+            float c = sin(r - 0.010);
+            float s = sin(a - iTime * 3.0 + b) * c;
+            
+            color *= abs(1.0 / (s * 10.8)) - 0.01;
+            gl_FragColor = vec4(color, 1.);
+        }
+		`;
+        return getMesh(fragmentShader);
+    },
 
 }
