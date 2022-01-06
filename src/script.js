@@ -30,10 +30,18 @@ const cubeTextureLoader = new THREE.CubeTextureLoader()
 const textureLoader = new THREE.TextureLoader()
 
 window.iChannel0 = textureLoader.load('./img.png')
+window.iChannel1 = textureLoader.load('./img1.jpg')
 
-window.iChannel0 .wrapS = THREE.RepeatWrapping;
-window.iChannel0 .wrapT = THREE.RepeatWrapping;
-window.iChannel0 .repeat.set( 10, 10 );
+
+
+const setTexture = (texture) => {
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(10, 10);
+}
+
+setTexture(window.iChannel0)
+setTexture(window.iChannel1)
 /**
  * Lights
  */
@@ -116,7 +124,7 @@ Object.keys(Effect).forEach((e, i) => {
     gui.add(effectList, name);
     last = name;
 })
-  
+
 updateEffect(Effect[last]());
 
 
