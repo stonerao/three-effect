@@ -31,6 +31,8 @@ const textureLoader = new THREE.TextureLoader()
 
 window.iChannel0 = textureLoader.load('./img.png')
 window.iChannel1 = textureLoader.load('./img1.jpg')
+window.iChannel2 = textureLoader.load('./img2.jpg')
+window.iChannel3 = textureLoader.load('./img3.png')
 
 
 
@@ -42,6 +44,8 @@ const setTexture = (texture) => {
 
 setTexture(window.iChannel0)
 setTexture(window.iChannel1)
+setTexture(window.iChannel2)
+setTexture(window.iChannel3)
 /**
  * Lights
  */
